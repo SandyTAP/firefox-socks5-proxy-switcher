@@ -18,6 +18,7 @@ let autoTimer = null;
 let autoEnabled = false;
 let usedProxies = [];
 let manualSelect = false;
+let autoEpoch = 0;
 
 async function fetchProxyList() {
   const response = await fetch(PROXY_URL);
@@ -144,7 +145,7 @@ function getActiveProxyFromStorage() {
 }
 
 async function getWorkingAutoProxy() {
-  if (!proxyResults.length || isChecking) return null;
+  if (!autoEnabled || !proxyResults.length || isChecking) return null;
   const unused = proxyResults.filter(r => !usedProxies.includes(r.proxy));
   const pool = unused.length ? unused : (() => { usedProxies = []; return proxyResults; })();
   startProxyListener();
@@ -162,11 +163,15 @@ async function getWorkingAutoProxy() {
 
 async function startAuto() {
   stopAuto();
+  const epoch = autoEpoch;
   usedProxies = [];
   const current = await getActiveProxyFromStorage();
+  if (epoch !== autoEpoch || !autoEnabled) return;
   if (current) usedProxies.push(current);
   autoTimer = setInterval(async () => {
+    if (!autoEnabled || isChecking) return;
     const next = await getWorkingAutoProxy();
+    if (!autoEnabled) return;
     if (next) {
       setProxy(next);
       browser.runtime.sendMessage({ action: "autoChanged", proxy: next });
@@ -175,6 +180,7 @@ async function startAuto() {
 }
 
 function stopAuto() {
+  autoEpoch++;
   if (autoTimer) {
     clearInterval(autoTimer);
     autoTimer = null;
@@ -186,7 +192,7 @@ function setAutoEnabled(enabled) {
   autoEnabled = enabled;
   browser.storage.local.set({ autoEnabled: enabled });
   if (enabled) {
-    startAuto();
+    if (!autoTimer) startAuto();
   } else {
     stopAuto();
   }
