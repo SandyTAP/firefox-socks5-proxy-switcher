@@ -2,7 +2,6 @@ const PROXY_URL = "https://raw.githubusercontent.com/databay-labs/free-proxy-lis
 const TEST_BASE = "https://httpbin.org/anything/";
 const TIMEOUT_MS = 3000;
 const BATCH_SIZE = 8;
-const AUTO_INTERVAL_MS = 2 * 60 * 1000;
 
 let proxyResults = [];
 let proxyResultsDone = false;
@@ -14,11 +13,6 @@ let userProxy = null;
 let onRequestListener = null;
 let testMap = new Map();
 let testCounter = 0;
-let autoTimer = null;
-let autoEnabled = false;
-let usedProxies = [];
-let manualSelect = false;
-let autoEpoch = 0;
 
 async function fetchProxyList() {
   const response = await fetch(PROXY_URL);
@@ -84,7 +78,6 @@ function testProxy(proxy, id) {
 function checkAllProxies(sendResponse) {
   if (isChecking) return sendResponse({ status: "already_checking" });
   isChecking = true;
-  manualSelect = false;
   proxyResults = [];
   proxyResultsDone = false;
 
@@ -111,9 +104,7 @@ function checkAllProxies(sendResponse) {
     proxyResults = proxyResults.filter(r => r.success).sort((a, b) => a.latency - b.latency);
     proxyResultsDone = true;
     isChecking = false;
-    if (proxyResults.length > 0 && autoEnabled && !manualSelect) {
-      setProxy(proxyResults[0].proxy);
-    } else if (manualSelect && userProxy) {
+    if (userProxy) {
       setProxy(userProxy);
     }
     browser.runtime.sendMessage({ action: "done", results: proxyResults });
@@ -127,75 +118,21 @@ function checkAllProxies(sendResponse) {
 
 function setProxy(proxy) {
   userProxy = proxy;
-  if (!proxy) {
-    const clearStorage = () => browser.storage.local.set({ activeProxy: null });
-    if (isChecking) return Promise.resolve(clearStorage());
-    return browser.proxy.settings.clear({}).then(clearStorage);
-  }
-  const [host, port] = proxy.split(":");
   const save = () => browser.storage.local.set({ activeProxy: proxy });
-  if (isChecking) return Promise.resolve(save());
-  return browser.proxy.settings.set({
-    value: { proxyType: "socks", socks: { host, port: parseInt(port), version: 5 } }
-  }).then(save);
-}
-
-function getActiveProxyFromStorage() {
-  return browser.storage.local.get("activeProxy").then(res => res.activeProxy || null);
-}
-
-async function getWorkingAutoProxy() {
-  if (!autoEnabled || !proxyResults.length || isChecking) return null;
-  const unused = proxyResults.filter(r => !usedProxies.includes(r.proxy));
-  const pool = unused.length ? unused : (() => { usedProxies = []; return proxyResults; })();
-  startProxyListener();
-  for (const r of pool) {
-    const test = await testProxy(r.proxy, testCounter++);
-    if (test.success) {
-      stopProxyListener();
-      usedProxies.push(r.proxy);
-      return r.proxy;
+  const clearStorage = () => browser.storage.local.set({ activeProxy: null });
+  if (!proxy) {
+    if (!onRequestListener) {
+      return browser.proxy.settings.clear({}).then(clearStorage);
     }
+    return Promise.resolve(clearStorage());
   }
-  stopProxyListener();
-  return null;
-}
-
-async function startAuto() {
-  stopAuto();
-  const epoch = autoEpoch;
-  usedProxies = [];
-  const current = await getActiveProxyFromStorage();
-  if (epoch !== autoEpoch || !autoEnabled) return;
-  if (current) usedProxies.push(current);
-  autoTimer = setInterval(async () => {
-    if (!autoEnabled || isChecking) return;
-    const next = await getWorkingAutoProxy();
-    if (!autoEnabled) return;
-    if (next) {
-      setProxy(next);
-      browser.runtime.sendMessage({ action: "autoChanged", proxy: next });
-    }
-  }, AUTO_INTERVAL_MS);
-}
-
-function stopAuto() {
-  autoEpoch++;
-  if (autoTimer) {
-    clearInterval(autoTimer);
-    autoTimer = null;
+  if (!onRequestListener) {
+    const [host, port] = proxy.split(":");
+    return browser.proxy.settings.set({
+      value: { proxyType: "socks", socks: { host, port: parseInt(port), version: 5 } }
+    }).then(save);
   }
-  usedProxies = [];
-}
-
-function setAutoEnabled(enabled) {
-  autoEnabled = enabled;
-  browser.storage.local.set({ autoEnabled: enabled });
-  if (enabled) {
-    if (!autoTimer) startAuto();
-  } else {
-    stopAuto();
-  }
+  return Promise.resolve(save());
 }
 
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -204,8 +141,14 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
   if (message.action === "set") {
-    if (message.manual) manualSelect = true;
     setProxy(message.proxy).then(
+      () => sendResponse({ status: "ok" }),
+      () => sendResponse({ status: "error" })
+    );
+    return true;
+  }
+  if (message.action === "clear") {
+    setProxy(null).then(
       () => sendResponse({ status: "ok" }),
       () => sendResponse({ status: "error" })
     );
@@ -226,21 +169,5 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
       proxies: currentProxies,
       progress: Object.fromEntries(progressMap)
     });
-  }
-  if (message.action === "clear") {
-    manualSelect = true;
-    setProxy(null).then(
-      () => sendResponse({ status: "ok" }),
-      () => sendResponse({ status: "error" })
-    );
-    return true;
-  }
-  if (message.action === "auto") {
-    setAutoEnabled(message.enabled);
-    sendResponse({ status: "ok" });
-  }
-  if (message.action === "getAuto") {
-    browser.storage.local.get("autoEnabled").then(sendResponse);
-    return true;
   }
 });

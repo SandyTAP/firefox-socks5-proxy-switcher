@@ -1,8 +1,6 @@
 const checkBtn = document.getElementById("checkBtn");
 const clearBtn = document.getElementById("clearBtn");
 const sortBtn = document.getElementById("sortBtn");
-const autoBtn = document.getElementById("autoBtn");
-const autoStatusEl = document.getElementById("autoStatus");
 const statusEl = document.getElementById("status");
 const activeProxyEl = document.getElementById("activeProxy");
 const activeProxyText = document.getElementById("activeProxyText");
@@ -29,7 +27,7 @@ proxyList.addEventListener("click", (e) => {
   if (!item) return;
   const proxy = item.dataset.proxy;
   setStatus(`Применяю ${proxy}...`);
-  browser.runtime.sendMessage({ action: "set", proxy, manual: true }, (response) => {
+  browser.runtime.sendMessage({ action: "set", proxy }, (response) => {
     if (response && response.status === "ok") {
       setStatus("Прокси применен");
       loadActiveProxy();
@@ -108,16 +106,6 @@ function loadActiveProxy() {
   });
 }
 
-function loadAutoState() {
-  browser.runtime.sendMessage({ action: "getAuto" }, (response) => {
-    if (response && response.autoEnabled) {
-      autoBtn.checked = true;
-      autoStatusEl.textContent = "вкл";
-      autoStatusEl.classList.add("on");
-    }
-  });
-}
-
 browser.runtime.onMessage.addListener((message) => {
   if (message.action === "progress") {
     message.results.forEach(updateProxyResult);
@@ -126,13 +114,7 @@ browser.runtime.onMessage.addListener((message) => {
   if (message.action === "done") {
     checkBtn.disabled = false;
     setStatus(`Найдено ${message.results.length} рабочих прокси`);
-    if (autoBtn.checked) {
-      browser.runtime.sendMessage({ action: "auto", enabled: true });
-    }
     renderResults(message.results);
-    loadActiveProxy();
-  }
-  if (message.action === "autoChanged") {
     loadActiveProxy();
   }
 });
@@ -165,21 +147,17 @@ sortBtn.addEventListener("click", () => {
 });
 
 clearBtn.addEventListener("click", () => {
-  browser.runtime.sendMessage({ action: "clear" }, () => {
+  browser.runtime.sendMessage({ action: "clear" }, (response) => {
     activeProxyEl.style.display = "none";
-    setStatus("Прокси отключен");
+    if (response && response.status === "ok") {
+      setStatus("Прокси отключен");
+    } else {
+      setStatus("Не удалось отключить прокси", true);
+    }
   });
 });
 
-autoBtn.addEventListener("change", () => {
-  const enabled = autoBtn.checked;
-  autoStatusEl.textContent = enabled ? "вкл" : "выкл";
-  autoStatusEl.classList.toggle("on", enabled);
-  browser.runtime.sendMessage({ action: "auto", enabled });
-});
-
 loadActiveProxy();
-loadAutoState();
 browser.runtime.sendMessage({ action: "getState" }, (response) => {
   if (!response) return;
   if (response.checking) {
