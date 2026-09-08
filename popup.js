@@ -24,15 +24,20 @@ function getLatencyClass(latency) {
   return "slow";
 }
 
-function attachClickHandlers() {
-  proxyList.querySelectorAll(".proxy-item").forEach(item => {
-    item.addEventListener("click", () => {
-      browser.runtime.sendMessage({ action: "set", proxy: item.dataset.proxy }, () => {
-        loadActiveProxy();
-      });
-    });
+proxyList.addEventListener("click", (e) => {
+  const item = e.target.closest(".proxy-item");
+  if (!item) return;
+  const proxy = item.dataset.proxy;
+  setStatus(`Применяю ${proxy}...`);
+  browser.runtime.sendMessage({ action: "set", proxy, manual: true }, (response) => {
+    if (response && response.status === "ok") {
+      setStatus("Прокси применен");
+      loadActiveProxy();
+    } else {
+      setStatus("Не удалось применить прокси", true);
+    }
   });
-}
+});
 
 function renderView() {
   if (!viewList.length) {
@@ -65,7 +70,6 @@ function renderView() {
       </div>
     `;
   }).join("");
-  attachClickHandlers();
   loadActiveProxy();
 }
 
@@ -126,11 +130,7 @@ browser.runtime.onMessage.addListener((message) => {
       browser.runtime.sendMessage({ action: "auto", enabled: true });
     }
     renderResults(message.results);
-    if (message.results.length > 0) {
-      browser.runtime.sendMessage({ action: "set", proxy: message.results[0].proxy }, () => {
-        loadActiveProxy();
-      });
-    }
+    loadActiveProxy();
   }
   if (message.action === "autoChanged") {
     loadActiveProxy();

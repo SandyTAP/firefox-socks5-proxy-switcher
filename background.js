@@ -17,6 +17,7 @@ let testCounter = 0;
 let autoTimer = null;
 let autoEnabled = false;
 let usedProxies = [];
+let manualSelect = false;
 
 async function fetchProxyList() {
   const response = await fetch(PROXY_URL);
@@ -82,6 +83,7 @@ function testProxy(proxy, id) {
 function checkAllProxies(sendResponse) {
   if (isChecking) return sendResponse({ status: "already_checking" });
   isChecking = true;
+  manualSelect = false;
   proxyResults = [];
   proxyResultsDone = false;
 
@@ -108,6 +110,11 @@ function checkAllProxies(sendResponse) {
     proxyResults = proxyResults.filter(r => r.success).sort((a, b) => a.latency - b.latency);
     proxyResultsDone = true;
     isChecking = false;
+    if (proxyResults.length > 0 && autoEnabled && !manualSelect) {
+      setProxy(proxyResults[0].proxy);
+    } else if (manualSelect && userProxy) {
+      setProxy(userProxy);
+    }
     browser.runtime.sendMessage({ action: "done", results: proxyResults });
   }).catch(() => {
     stopProxyListener();
@@ -120,35 +127,46 @@ function checkAllProxies(sendResponse) {
 function setProxy(proxy) {
   userProxy = proxy;
   if (!proxy) {
-    if (!isChecking) {
-      browser.proxy.settings.clear({});
-    }
-    browser.storage.local.set({ activeProxy: null });
-    return;
+    const clearStorage = () => browser.storage.local.set({ activeProxy: null });
+    if (isChecking) return Promise.resolve(clearStorage());
+    return browser.proxy.settings.clear({}).then(clearStorage);
   }
-  if (!isChecking) {
-    const [host, port] = proxy.split(":");
-    browser.proxy.settings.set({
-      value: { proxyType: "socks", socks: { host, port: parseInt(port), version: 5 } }
-    });
-  }
-  browser.storage.local.set({ activeProxy: proxy });
+  const [host, port] = proxy.split(":");
+  const save = () => browser.storage.local.set({ activeProxy: proxy });
+  if (isChecking) return Promise.resolve(save());
+  return browser.proxy.settings.set({
+    value: { proxyType: "socks", socks: { host, port: parseInt(port), version: 5 } }
+  }).then(save);
 }
 
-function getNextAutoProxy() {
-  if (!proxyResults.length) return null;
+function getActiveProxyFromStorage() {
+  return browser.storage.local.get("activeProxy").then(res => res.activeProxy || null);
+}
+
+async function getWorkingAutoProxy() {
+  if (!proxyResults.length || isChecking) return null;
   const unused = proxyResults.filter(r => !usedProxies.includes(r.proxy));
   const pool = unused.length ? unused : (() => { usedProxies = []; return proxyResults; })();
-  const next = pool[0];
-  usedProxies.push(next.proxy);
-  return next.proxy;
+  startProxyListener();
+  for (const r of pool) {
+    const test = await testProxy(r.proxy, testCounter++);
+    if (test.success) {
+      stopProxyListener();
+      usedProxies.push(r.proxy);
+      return r.proxy;
+    }
+  }
+  stopProxyListener();
+  return null;
 }
 
-function startAuto() {
-  if (autoTimer) return;
+async function startAuto() {
+  stopAuto();
   usedProxies = [];
-  autoTimer = setInterval(() => {
-    const next = getNextAutoProxy();
+  const current = await getActiveProxyFromStorage();
+  if (current) usedProxies.push(current);
+  autoTimer = setInterval(async () => {
+    const next = await getWorkingAutoProxy();
     if (next) {
       setProxy(next);
       browser.runtime.sendMessage({ action: "autoChanged", proxy: next });
@@ -168,10 +186,6 @@ function setAutoEnabled(enabled) {
   autoEnabled = enabled;
   browser.storage.local.set({ autoEnabled: enabled });
   if (enabled) {
-    if (!isChecking && proxyResults.length) {
-      const next = getNextAutoProxy();
-      if (next) setProxy(next);
-    }
     startAuto();
   } else {
     stopAuto();
@@ -184,8 +198,12 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
   if (message.action === "set") {
-    setProxy(message.proxy);
-    sendResponse({ status: "ok" });
+    if (message.manual) manualSelect = true;
+    setProxy(message.proxy).then(
+      () => sendResponse({ status: "ok" }),
+      () => sendResponse({ status: "error" })
+    );
+    return true;
   }
   if (message.action === "getActive") {
     browser.storage.local.get("activeProxy").then(sendResponse);
@@ -204,8 +222,12 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
   }
   if (message.action === "clear") {
-    setProxy(null);
-    sendResponse({ status: "ok" });
+    manualSelect = true;
+    setProxy(null).then(
+      () => sendResponse({ status: "ok" }),
+      () => sendResponse({ status: "error" })
+    );
+    return true;
   }
   if (message.action === "auto") {
     setAutoEnabled(message.enabled);
