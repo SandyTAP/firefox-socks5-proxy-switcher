@@ -141,16 +141,20 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
   if (message.action === "set") {
+    if (!/^\d+\.\d+\.\d+\.\d+:\d+$/.test(message.proxy || "")) {
+      sendResponse({ status: "error", reason: "Некорректный адрес прокси" });
+      return true;
+    }
     setProxy(message.proxy).then(
       () => sendResponse({ status: "ok" }),
-      () => sendResponse({ status: "error" })
+      (e) => sendResponse({ status: "error", reason: e && e.message ? e.message : "Не удалось применить прокси" })
     );
     return true;
   }
   if (message.action === "clear") {
     setProxy(null).then(
       () => sendResponse({ status: "ok" }),
-      () => sendResponse({ status: "error" })
+      (e) => sendResponse({ status: "error", reason: e && e.message ? e.message : "Не удалось отключить прокси" })
     );
     return true;
   }

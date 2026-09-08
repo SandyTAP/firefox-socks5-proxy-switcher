@@ -220,6 +220,12 @@ input:checked + .slider:before {
   background: #1a3050;
 }
 
+.proxy-item.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .proxy-item.active {
   background: #1a3a2a;
   border-left: 3px solid #00ff88;

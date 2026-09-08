@@ -24,7 +24,7 @@ function getLatencyClass(latency) {
 
 proxyList.addEventListener("click", (e) => {
   const item = e.target.closest(".proxy-item");
-  if (!item) return;
+  if (!item || item.classList.contains("disabled")) return;
   const proxy = item.dataset.proxy;
   setStatus(`Применяю ${proxy}...`);
   browser.runtime.sendMessage({ action: "set", proxy }, (response) => {
@@ -32,7 +32,7 @@ proxyList.addEventListener("click", (e) => {
       setStatus("Прокси применен");
       loadActiveProxy();
     } else {
-      setStatus("Не удалось применить прокси", true);
+      setStatus(response && response.reason ? response.reason : "Не удалось применить прокси", true);
     }
   });
 });
@@ -55,7 +55,7 @@ function renderView() {
   proxyList.textContent = "";
   for (const r of sorted) {
     const item = document.createElement("div");
-    item.className = "proxy-item";
+    item.className = "proxy-item" + (r.success ? "" : " disabled");
     item.dataset.proxy = r.proxy;
 
     const ip = document.createElement("span");
