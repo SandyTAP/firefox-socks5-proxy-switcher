@@ -1,0 +1,284 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  width: 380px;
+  max-width: 380px;
+  overflow-x: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #1a1a2e;
+  color: #eee;
+}
+
+.container {
+  padding: 15px;
+  overflow-x: hidden;
+}
+
+h1 {
+  font-size: 18px;
+  margin-bottom: 15px;
+  color: #00d4ff;
+  text-align: center;
+}
+
+h2 {
+  font-size: 14px;
+  margin: 15px 0 10px;
+  color: #888;
+}
+
+.status {
+  text-align: center;
+  padding: 10px;
+  margin-bottom: 15px;
+  background: #16213e;
+  border-radius: 8px;
+  font-size: 13px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.status.error {
+  background: #4a1c1c;
+  color: #ff6b6b;
+}
+
+.btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: all 0.2s;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #00d4ff, #0099cc);
+  color: #000;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+}
+
+.btn-secondary {
+  background: #2a2a4a;
+  color: #888;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #3a3a5a;
+}
+
+.active-proxy {
+  background: #1a3a2a;
+  padding: 10px 15px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+.active-proxy span:last-child {
+  color: #00ff88;
+  font-weight: 600;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #16213e;
+  padding: 12px 15px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  gap: 10px;
+}
+
+.auto-status {
+  font-size: 12px;
+  color: #888;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.auto-status.on {
+  color: #00ff88;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #2a2a4a;
+  transition: 0.3s;
+  border-radius: 24px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #888;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #00d4ff;
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+  background-color: #000;
+}
+
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.results-header h2 {
+  margin: 0;
+}
+
+.sort-btn {
+  background: #2a2a4a;
+  color: #00d4ff;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sort-btn:hover {
+  background: #3a3a5a;
+}
+
+.results {
+  max-height: 350px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.proxy-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: #16213e;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  overflow: hidden;
+}
+
+.proxy-item:hover {
+  background: #1a3050;
+}
+
+.proxy-item.active {
+  background: #1a3a2a;
+  border-left: 3px solid #00ff88;
+}
+
+.proxy-item .ip {
+  font-family: monospace;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.proxy-item .latency {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  white-space: nowrap;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.latency.fast {
+  background: #1a3a2a;
+  color: #00ff88;
+}
+
+.latency.medium {
+  background: #3a3a1a;
+  color: #ffff00;
+}
+
+.latency.slow {
+  background: #3a1a1a;
+  color: #ff6b6b;
+}
+
+.latency.pending {
+  background: #2a2a4a;
+  color: #888;
+}
+
+.latency.dead {
+  background: #3a1a1a;
+  color: #ff6b6b;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1a2e;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3a3a5a;
+  border-radius: 3px;
+}

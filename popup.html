@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <h1>SOCKS5 Proxy</h1>
+    
+    <div id="status" class="status">Готов к проверке</div>
+    
+    <button id="checkBtn" class="btn btn-primary">Проверить прокси</button>
+    <button id="clearBtn" class="btn btn-secondary">Отключить прокси</button>
+    
+    <div id="activeProxy" class="active-proxy" style="display:none">
+      <span>Активный:</span>
+      <span id="activeProxyText"></span>
+    </div>
+    
+    <div class="toggle-row">
+      <span>Менять прокси каждые 2 минуты</span>
+      <label class="switch">
+        <input type="checkbox" id="autoBtn">
+        <span class="slider"></span>
+      </label>
+    </div>
+    
+    <div class="toggle-row">
+      <span>Выбирать по пингу и не использовать повторно</span>
+      <span id="autoStatus" class="auto-status">выкл</span>
+    </div>
+    
+    <div id="results" class="results" style="display:none">
+      <div class="results-header">
+        <h2>Результаты (<span id="count">0</span>)</h2>
+        <button id="sortBtn" class="sort-btn" title="Сортировка">↑ пинг</button>
+      </div>
+      <div id="proxyList"></div>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
