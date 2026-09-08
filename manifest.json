@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "SOCKS5 Proxy Switcher",
-  "version": "1.0",
+  "version": "1.0.1",
   "description": "Автоматический выбор лучшего SOCKS5 прокси",
   "permissions": [
     "proxy",
@@ -18,7 +18,7 @@
   },
   "browser_specific_settings": {
     "gecko": {
-      "id": "proxy-switcher@example.com",
+      "id": "socks5-proxy-switcher@sandytap-dev",
       "strict_min_version": "91.1.0",
       "data_collection_permissions": {
         "required": [

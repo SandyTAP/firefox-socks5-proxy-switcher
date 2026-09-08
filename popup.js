@@ -52,22 +52,33 @@ function renderView() {
   countEl.textContent = sorted.length;
   resultsEl.style.display = "block";
   sortBtn.textContent = sortAsc ? "↑ пинг" : "↓ пинг";
-  proxyList.innerHTML = sorted.map(r => {
-    let latHtml;
+  proxyList.textContent = "";
+  for (const r of sorted) {
+    const item = document.createElement("div");
+    item.className = "proxy-item";
+    item.dataset.proxy = r.proxy;
+
+    const ip = document.createElement("span");
+    ip.className = "ip";
+    ip.textContent = r.proxy;
+
+    const lat = document.createElement("span");
+    lat.className = "latency";
     if (r.success) {
-      latHtml = `<span class="latency ${getLatencyClass(r.latency)}">${r.latency}ms</span>`;
+      lat.classList.add(getLatencyClass(r.latency));
+      lat.textContent = `${r.latency}ms`;
     } else if (r.done) {
-      latHtml = `<span class="latency dead">✕</span>`;
+      lat.classList.add("dead");
+      lat.textContent = "✕";
     } else {
-      latHtml = `<span class="latency pending">...</span>`;
+      lat.classList.add("pending");
+      lat.textContent = "...";
     }
-    return `
-      <div class="proxy-item" data-proxy="${r.proxy}">
-        <span class="ip">${r.proxy}</span>
-        ${latHtml}
-      </div>
-    `;
-  }).join("");
+
+    item.appendChild(ip);
+    item.appendChild(lat);
+    proxyList.appendChild(item);
+  }
   loadActiveProxy();
 }
 
