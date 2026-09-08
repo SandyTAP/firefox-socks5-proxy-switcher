@@ -1,61 +1,61 @@
 # SOCKS5 Proxy Switcher
 
-Firefox extension that automatically tests SOCKS5 proxies from a free proxy list, displays live latency, selects the fastest one, and can auto-rotate proxies every 2 minutes.
+Firefox-расширение, которое автоматически тестирует SOCKS5-прокси из бесплатного списка, показывает задержку в реальном времени, выбирает самый быстрый прокси и умеет автоматически менять прокси каждые 2 минуты.
 
-## Features
+## Возможности
 
-- **Loads a free SOCKS5 proxy list** from `databay-labs/free-proxy-list`
-- **Live testing** — all proxies appear in the list instantly, ping is measured in real time (8 parallel checks via `proxy.onRequest`)
-- **Auto-selects the fastest proxy** by lowest latency
-- **Auto-rotation** — switch to the next fastest unused proxy every 2 minutes (cycles when all are used)
-- **Sort by ping** — toggle ascending/descending
-- **Manual override** — click any proxy in the list to use it immediately
-- **Testing is isolated** — your browsing traffic is not routed through proxies while they are being checked
+- **Загрузка бесплатного списка SOCKS5-прокси** из `databay-labs/free-proxy-list`
+- **Тестирование в реальном времени** — все прокси появляются в списке мгновенно, пинг измеряется на лету (8 параллельных проверок через `proxy.onRequest`)
+- **Автовыбор самого быстрого прокси** по наименьшей задержке
+- **Автосмена** — переключение на следующий самый быстрый неиспользованный прокси каждые 2 минуты (цикличность после использования всех)
+- **Сортировка по пингу** — переключение по возрастанию/убыванию
+- **Ручной выбор** — клик по любому прокси в списке использует его сразу
+- **Изолированное тестирование** — ваш трафик не проходит через прокси во время их проверки
 
-## Installation (temporary)
+## Установка (временно)
 
-1. Open Firefox and go to `about:debugging#/runtime/this-firefox`
-2. Click **Load Temporary Add-on**
-3. Select `manifest.json` from this folder
+1. Откройте Firefox и перейдите на `about:debugging#/runtime/this-firefox`
+2. Нажмите **Временное дополнение** (Load Temporary Add-on)
+3. Выберите `manifest.json` в этой папке
 
-## Installation (permanent)
+## Установка (постоянная)
 
-Unsigned extensions cannot be permanently installed in release Firefox. Options:
+Неподписанные расширения нельзя установить на постоянной основе в обычном Firefox. Варианты:
 
-1. **Via AMO** — submit to <https://addons.mozilla.org> to get a signed `.xpi`
-2. **Developer Edition** — set `xpinstall.signatures.required = false` in `about:config`, package the folder into a `.zip`, rename to `.xpi`, and install via `about:addons` (or drag into the window)
+1. **Через AMO** — загрузите на <https://addons.mozilla.org>, чтобы получить подписанный `.xpi`
+2. **Developer Edition** — установите `xpinstall.signatures.required = false` в `about:config`, упакуйте папку в `.zip`, переименуйте в `.xpi` и установите через `about:addons` (или перетащите в окно)
 
-## Building an .xpi
+## Сборка .xpi
 
 ```bash
 zip -r socks5-proxy-switcher.xpi manifest.json background.js popup.html popup.css popup.js icon.svg
 ```
 
-## Usage
+## Использование
 
-1. Click the toolbar icon
-2. The proxy list loads and testing starts automatically
-3. The fastest working proxy is set for the whole browser
-4. Optionally enable **"Менять прокси каждые 2 минуты"** to auto-rotate
+1. Кликните по иконке на панели инструментов
+2. Список прокси загрузится, и тестирование начнется автоматически
+3. Самый быстрый рабочий прокси будет установлен для всего браузера
+4. При желании включите **«Менять прокси каждые 2 минуты»** для автосмены
 
-## Files
+## Файлы
 
-| File | Purpose |
-|------|---------|
-| `manifest.json` | Extension manifest (MV2) |
-| `background.js` | Proxy list fetching, parallel latency tests, proxy routing |
-| `popup.html/js/css` | Popup UI |
+| Файл | Назначение |
+|------|------------|
+| `manifest.json` | Манифест расширения (MV2) |
+| `background.js` | Загрузка списка прокси, параллельные проверки задержки, маршрутизация через прокси |
+| `popup.html/js/css` | Интерфейс всплывающего окна |
 
-## Permissions
+## Права
 
-- `proxy` — set the browser SOCKS proxy and route test requests
-- `storage` — remember the active proxy and auto-rotation state
-- `<all_urls>` — needed to reach proxy test endpoints
+- `proxy` — установка SOCKS-прокси браузера и маршрутизация тестовых запросов
+- `storage` — запоминание активного прокси и состояния автосмены
+- `<all_urls>` — доступ к тестовым эндпоинтам прокси
 
-## Disclaimer
+## Дисклеймер
 
-Free proxies are unreliable and may be slow, dead, or insecure. Only use this tool with proxies you trust. The author is not responsible for what you do while using it.
+Бесплатные прокси ненадежны и могут быть медленными, нерабочими или небезопасными. Используйте этот инструмент только с прокси, которым доверяете. Автор не несет ответственности за то, что вы делаете при его использовании.
 
-## License
+## Лицензия
 
 MIT
